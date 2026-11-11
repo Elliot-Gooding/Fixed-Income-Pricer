@@ -10,16 +10,18 @@ import io
 import re
 import zipfile
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 import pandas as pd
 import requests
 
+HERE = Path(__file__).parent
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 # ---- 1. Gilts: from the UK Debt Management Office ----
 # Saved by hand from https://www.dmo.gov.uk/data/XmlDataReport?reportCode=D1A
 # (the site blocks scripted downloads with a CAPTCHA)
-root = ET.parse("XmlDataReport.xml").getroot()
+root = ET.parse(HERE / "XmlDataReport.xml").getroot()
 gilts = pd.DataFrame([el.attrib for el in root.iter("View_GILTS_IN_ISSUE")])
 gilts = gilts[gilts["INSTRUMENT_TYPE"].str.contains("Conventional")]  # plain fixed-coupon gilts
 
@@ -37,7 +39,7 @@ gilts = pd.DataFrame({
     "coupon": gilts["INSTRUMENT_NAME"].map(coupon_from_name),
     "maturity": pd.to_datetime(gilts["REDEMPTION_DATE"]).dt.date,
 }).sort_values("maturity")
-gilts.to_csv("gilts.csv", index=False)
+gilts.to_csv(HERE / "gilts.csv", index=False)
 print(gilts.to_string(index=False))
 
 # ---- 2. Spot curve: from the Bank of England ----
@@ -56,6 +58,6 @@ latest = raw.dropna(subset=[1]).iloc[-1]            # last row = most recent day
 curve = pd.DataFrame({"years": maturities.values,
                       "spot_rate_pct": pd.to_numeric(latest.iloc[1:], errors="coerce").values})
 curve = curve.dropna()
-curve.to_csv("spot_curve.csv", index=False)
+curve.to_csv(HERE / "spot_curve.csv", index=False)
 print(f"\nSpot curve for {latest.iloc[0]}:")
 print(curve.to_string(index=False))

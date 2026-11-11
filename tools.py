@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 
-gilts = pd.read_csv('data\gilts.csv')
-spot_curve = pd.read_csv('data\spot_curve.csv')
+DATA_DIR = Path(__file__).parent / "data"
+
+spot_curve = pd.read_csv(DATA_DIR / "spot_curve.csv")
 
 #
 # Text divider

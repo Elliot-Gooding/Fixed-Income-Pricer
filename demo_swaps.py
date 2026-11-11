@@ -8,7 +8,7 @@ from swaps import calc_tau, par_rate, swap_value, annuity, swap_float_leg
 # Model some swaps
 #
 
-today = pd.Timestamp.today()
+today = pd.Timestamp.today().normalize()
 start = today
 t0 = 0
 
@@ -48,8 +48,8 @@ print("Calculate par rate and value the swap at this rate")
 K1 = par_rate(N, t0, t1, D1)
 K2 = par_rate(N, t0, t2, D2)
 
-val1 = swap_value( K1, N, D1, tau1, t0 )
-val2 = swap_value( K2, N, D2, tau2, t0 )
+val1 = swap_value( K1, N, D1, t1, t0 )
+val2 = swap_value( K2, N, D2, t2, t0 )
 
 print(f"Value of five-year swap: {val1:.2f}")
 print(f"Value of two-year swap:  {val2:.2f}")
@@ -65,8 +65,8 @@ divider()
 
 
 bp = 0.0001
-d_val1 = swap_value( K1 + bp, N, D1, tau1, t0 ) - val1
-d_val2 = swap_value( K2 + bp, N, D2, tau2, t0 ) - val2
+d_val1 = swap_value( K1 + bp, N, D1, t1, t0 ) - val1
+d_val2 = swap_value( K2 + bp, N, D2, t2, t0 ) - val2
 
 A1 = annuity(tau1, D1)
 A2 = annuity(tau2, D2)
@@ -74,14 +74,14 @@ A2 = annuity(tau2, D2)
 
 #Five-year
 print("Five-year swap")
-print(f"-N x A x 0.0001           = {-N*A1*bp}")
+print(f"-N x A x bp               = {-N*A1*bp}")
 print(f"Sensitivity for five-year = {d_val1}")
 
 print()
 
 #Two-year
 print("Two-year swap")
-print(f"-N x A x 0.0001          =  {-N*A2*bp}")
+print(f"-N x A x bp              =  {-N*A2*bp}")
 print(f"Sensitivity for two-year =  {d_val2}")
 
 divider()
@@ -137,8 +137,8 @@ print("We fix par rate K for each swap\n")
 D1_up = discount(t1, offset=bp)
 D2_up = discount(t2, offset=bp)
 
-new_val1 = swap_value(K1, N, D1_up, t1, t0)
-new_val2 = swap_value(K2, N, D2_up, t2, t0)
+new_val1 = swap_value(K1, N, D1_up, t1, t0, offset=bp)
+new_val2 = swap_value(K2, N, D2_up, t2, t0, offset=bp)
 
 print(f"Five-year DV01: {new_val1 - val1}")
 print(f"Two-year  DV01: {new_val2 - val2}")

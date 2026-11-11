@@ -2,7 +2,7 @@ import pandas as pd
 from gilts import gilt_data, price_gilt, dur, convexity
 from tools import divider
 
-today = pd.Timestamp.today()
+today = pd.Timestamp.today().normalize()
 
 gilt_num = 50
 gd = gilt_data(gilt_num, today, verbose=True)

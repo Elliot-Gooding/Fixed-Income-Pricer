@@ -2,10 +2,9 @@ import numpy as np
 from scipy.optimize import brentq
 import pandas as pd
 
-from tools import schedule, discount, divider
+from tools import schedule, discount, divider, DATA_DIR
 
-gilts = pd.read_csv('data\gilts.csv')
-spot_curve = pd.read_csv('data\spot_curve.csv')
+gilts = pd.read_csv(DATA_DIR / "gilts.csv")
 
 #
 # Get gilt data
@@ -23,9 +22,8 @@ def gilt_data(gilt_num, val_date, verbose=False):
 
     # Get pandas start and end dates
     maturity = pd.Timestamp(maturity)
-    today = val_date
 
-    dates, t = schedule(maturity, 0.5, today, today)
+    dates, t = schedule(maturity, 0.5, val_date, val_date)
 
     # Pay a coupon at each date
     cf = np.full((len(dates)), np.float64(coupon) / 2)
@@ -73,9 +71,9 @@ def price_gilt(cf, t):
 
     # Call calculation functions
     g_price = pv(cf,D)
-    g_YTM = ytm(g_price, t, cf)
+    g_ytm = ytm(g_price, t, cf)
 
-    return g_price, g_YTM
+    return g_price, g_ytm
 
 #
 # Given the cash flows and price, calculate both measurements of duration
