@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from tools import schedule, discount, divider
+from tools import schedule, discount, divider, spot_curve, ois_curve
 from swaps import calc_tau, par_rate, swap_value, annuity, swap_float_leg
 
 #
@@ -20,7 +20,7 @@ _, t1 = schedule(
     today = today 
     )
 tau1 = calc_tau(t1, t0)
-D1 = discount(t1)
+D1 = discount(t1, ois_curve)
 
 
 # Two-year swap
@@ -31,7 +31,7 @@ _, t2 = schedule(
     today = today 
 )
 tau2 = calc_tau(t2, t0)
-D2 = discount(t2)
+D2 = discount(t2, ois_curve)
 
 # Notional
 N = 1e6
@@ -96,8 +96,8 @@ divider()
 pv_five_year = 0
 times1 = np.concatenate(([t0], t1))
 for i in range(1, len(t1)+1):
-    di       = discount(times1[i])
-    di_minus = discount(times1[i-1])
+    di       = discount(times1[i], ois_curve)
+    di_minus = discount(times1[i-1], ois_curve)
     F = ( di_minus / di - 1 ) / tau1[i-1]
     pvi = tau1[i-1] * F * N * di
     pv_five_year += pvi
@@ -106,8 +106,8 @@ for i in range(1, len(t1)+1):
 pv_two_year = 0
 times2 = np.concatenate(([t0], t2))
 for i in range(1, len(t2)+1):
-    di       = discount(times2[i])
-    di_minus = discount(times2[i-1])
+    di       = discount(times2[i], ois_curve)
+    di_minus = discount(times2[i-1], ois_curve)
     F = ( di_minus / di - 1 ) / tau2[i-1]
     pvi = tau2[i-1] * F * N * di
     pv_two_year += pvi
@@ -134,8 +134,8 @@ print("Calculate DV01")
 print("We fix par rate K for each swap\n")
 
 # Offset rates
-D1_up = discount(t1, offset=bp)
-D2_up = discount(t2, offset=bp)
+D1_up = discount(t1, ois_curve, offset=bp)
+D2_up = discount(t2, ois_curve, offset=bp)
 
 new_val1 = swap_value(K1, N, D1_up, t1, t0, offset=bp)
 new_val2 = swap_value(K2, N, D2_up, t2, t0, offset=bp)

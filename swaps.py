@@ -1,6 +1,6 @@
 import numpy as np
 
-from tools import discount
+from tools import discount, ois_curve
 
 #
 # Calculate the time between each payment, starting at t0
@@ -20,7 +20,7 @@ def annuity(tau, D):
 # Calculate the present value of the cash flows of the floating leg
 #
 def swap_float_leg(N, t0, D, offset=0):
-    D0 = discount(t0, offset)
+    D0 = discount(t0, ois_curve, offset)
     Dt = D[-1]
     pv = N*(D0 - Dt)
     return pv

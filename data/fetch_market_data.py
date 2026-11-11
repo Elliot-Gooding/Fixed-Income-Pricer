@@ -42,22 +42,27 @@ gilts = pd.DataFrame({
 gilts.to_csv(HERE / "gilts.csv", index=False)
 print(gilts.to_string(index=False))
 
-# ---- 2. Spot curve: from the Bank of England ----
+# ---- 2. Spot curves: from the Bank of England ----
 url = ("https://www.bankofengland.co.uk/-/media/boe/files/statistics/"
        "yield-curves/latest-yield-curve-data.zip")
 zf = zipfile.ZipFile(io.BytesIO(requests.get(url, headers=HEADERS).content))
-xlsx = next(n for n in zf.namelist() if "nominal" in n.lower())
-book = pd.ExcelFile(io.BytesIO(zf.read(xlsx)))
-sheet = next(s for s in book.sheet_names if "spot" in s.lower() and "short" not in s.lower())
-raw = book.parse(sheet, header=None)
 
-header_row = next(i for i in range(len(raw))
-                  if "year" in str(raw.iat[i, 0]).lower())
-maturities = pd.to_numeric(raw.iloc[header_row, 1:], errors="coerce")
-latest = raw.dropna(subset=[1]).iloc[-1]            # last row = most recent day
-curve = pd.DataFrame({"years": maturities.values,
-                      "spot_rate_pct": pd.to_numeric(latest.iloc[1:], errors="coerce").values})
-curve = curve.dropna()
-curve.to_csv(HERE / "spot_curve.csv", index=False)
-print(f"\nSpot curve for {latest.iloc[0]}:")
-print(curve.to_string(index=False))
+def boe_spot_curve(zf, file_keyword):
+    """Latest spot curve (years, %) from the BoE workbook whose name contains file_keyword."""
+    xlsx = next(n for n in zf.namelist() if file_keyword in n.lower())
+    book = pd.ExcelFile(io.BytesIO(zf.read(xlsx)))
+    sheet = next(s for s in book.sheet_names if "spot" in s.lower() and "short" not in s.lower())
+    raw = book.parse(sheet, header=None)
+
+    header_row = next(i for i in range(len(raw)) if "year" in str(raw.iat[i, 0]).lower())
+    maturities = pd.to_numeric(raw.iloc[header_row, 1:], errors="coerce")
+    latest = raw.dropna(subset=[1]).iloc[-1]
+    curve = pd.DataFrame({"years": maturities.values,
+                          "spot_rate_pct": pd.to_numeric(latest.iloc[1:], errors="coerce").values})
+    return curve.dropna(), latest.iloc[0]
+
+for keyword, filename in [("nominal", "spot_curve.csv"), ("ois", "ois_curve.csv")]:
+    curve, as_of = boe_spot_curve(zf, keyword)
+    curve.to_csv(HERE / filename, index=False)
+    print(f"\n{keyword} spot curve for {as_of}:")
+    print(curve.to_string(index=False))

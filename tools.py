@@ -6,6 +6,7 @@ import numpy as np
 DATA_DIR = Path(__file__).parent / "data"
 
 spot_curve = pd.read_csv(DATA_DIR / "spot_curve.csv")
+ois_curve  = pd.read_csv(DATA_DIR / "ois_curve.csv")
 
 #
 # Text divider
@@ -35,11 +36,11 @@ def schedule(maturity, freq, start, today):
 #
 # Get the respective spot rates
 #
-def spot_rate(t, offset=0):
+def spot_rate(t, curve, offset=0):
     z = np.interp(
         t,
-        spot_curve["years"],
-        spot_curve["spot_rate_pct"]
+        curve["years"],
+        curve["spot_rate_pct"]
     ) / 100
     return z + offset
 
@@ -47,8 +48,8 @@ def spot_rate(t, offset=0):
 #
 # Calculate continuously compounding discount curve
 #
-def discount(t, offset=0):
-    z = spot_rate(t, offset)
+def discount(t, curve, offset=0):
+    z = spot_rate(t, curve, offset)
 
     # Calculate discount
     D = np.exp( -z * t )

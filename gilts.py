@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import brentq
 import pandas as pd
 
-from tools import schedule, discount, divider, DATA_DIR
+from tools import schedule, discount, divider, DATA_DIR, spot_curve
 
 gilts = pd.read_csv(DATA_DIR / "gilts.csv")
 
@@ -51,14 +51,14 @@ def pv(cf, D):
     return np.dot(cf, D)
 
 #
-# Given the cash flows and yield, calculate the present value
+# Given the cash flows and semi-annually compounded yield, calculate the present value
 #
 def pv_at_yield(y, times, cf):
-    return np.sum(  cf / (1 + y)**times )
+    return np.sum(  cf * (1 + y/2)**(-2*times) )
 
 
 #
-# Given the price and cash flows, calculate the yield
+# Given the price and cash flows, calculate the semi-annually compounded yield
 #
 def ytm(price, times, cf):
     return brentq( lambda y: pv_at_yield(y, times, cf) - price, -0.5, 1.0)
@@ -67,7 +67,7 @@ def ytm(price, times, cf):
 # Price a specific gilt
 #
 def price_gilt(cf, t):
-    D = discount(t)
+    D = discount(t, spot_curve)
 
     # Call calculation functions
     g_price = pv(cf,D)
@@ -76,23 +76,23 @@ def price_gilt(cf, t):
     return g_price, g_ytm
 
 #
-# Given the cash flows and price, calculate both measurements of duration
+# Given the cash flows, price and semi-annually compounded yield, calculate both measurements of duration
 #
 def dur(times, cf, y, P):
     D_mac = np.dot(
-        times * np.power((1 + y), -times) / P,
+        times * np.power((1 + y/2), -2*times) / P,
         cf
     )
-    D_mod = D_mac / (1+y)
+    D_mod = D_mac / (1+y/2)
 
     return D_mac, D_mod
 
 #
-# Given the cash flows and price, calculate the convexity
+# Given the cash flows, price and semi-annually compounded yield, calculate the convexity
 #
 def convexity(times, cf, y, P):
     C = np.dot(
-        times * (times + 1) * np.power((1 + y), (- times - 2)), 
+        times * (times + 0.5) * np.power((1 + y/2), (- 2*times - 2)), 
         cf
     ) / P
     return C
