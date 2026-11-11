@@ -1,0 +1,53 @@
+import pandas as pd
+import numpy as np
+
+gilts = pd.read_csv('data\gilts.csv')
+spot_curve = pd.read_csv('data\spot_curve.csv')
+
+#
+# Text divider
+#
+def divider(): print("\n" + "~"*50 + "\n")
+
+
+#
+# Build the cash flow schedule, with payments at tau intervals
+#
+def schedule(maturity, freq, start, today):
+    # Collect all dates on which payments are made, working backwards from the expiry date
+    dates = []
+    d = maturity
+    while d > start:
+        dates.append(d)
+        d -= pd.DateOffset(months = int(12*freq))
+    dates.reverse()
+    dates = pd.Series(dates)
+
+    # Calculate relative times of payments
+    t = (dates - today).dt.days.values / 365.25
+
+    return dates, t
+
+
+#
+# Get the respective spot rates
+#
+def spot_rate(t, offset=0):
+    z = np.interp(
+        t,
+        spot_curve["years"],
+        spot_curve["spot_rate_pct"]
+    ) / 100
+    return z + offset
+
+
+#
+# Calculate continuously compounding discount curve
+#
+def discount(t, offset=0):
+    z = spot_rate(t, offset)
+
+    # Calculate discount
+    D = np.exp( -z * t )
+
+    return D
