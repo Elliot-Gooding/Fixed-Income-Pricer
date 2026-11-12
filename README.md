@@ -23,7 +23,7 @@ A small Python library for pricing UK government bonds (gilts) and GBP SONIA int
 | `data/spot_curve.csv` | Bank of England nominal (gilt) spot curve, 0.5–40 years |
 | `data/ois_curve.csv` | Bank of England OIS (SONIA) spot curve, 0.5–25 years |
 
-The DMO blocks scripted downloads so `data/fetch_market_data.py` rebuilds all three sourced from `XmlDataReport.xml` which is saved by hand from the [DMO website](https://www.dmo.gov.uk/data/XmlDataReport?reportCode=D1A). The BoE curves are downloaded automatically.
+`data/fetch_market_data.py` rebuilds all three. The DMO blocks scripted downloads, so `gilts.csv` is built from `XmlDataReport.xml`, which is saved by hand from the [DMO website](https://www.dmo.gov.uk/data/XmlDataReport?reportCode=D1A). The BoE curves are downloaded automatically.
 
 ## Usage
 
@@ -36,7 +36,7 @@ python demo_swaps.py               # price swaps and check the results
 
 ## Method
 
-**Discounting.** Since BoE spot rates are continuously compounded, the discount factors are $D(t) = e^{-z(t)t}$. However $z(t)$ may not necessary lie nicely on the curve, so we linearly interpolate between curve points where necessary.
+**Discounting.** Since BoE spot rates are continuously compounded, the discount factors are $D(t) = e^{-z(t)t}$, where $z(t)$ is linearly interpolated between curve points.
 
 **Gilts.** The price of a gilt is simply the present value of its cash flows, that is, $P = \sum_i c_i D(t_i)$. The yield is then the rate $y$ at which
 
@@ -55,7 +55,7 @@ We check this in `demo_swaps.py` numerically by valuing the floating leg cash fl
 We calculate two sensitivities in the demo which look similar but differ by a small percent:
 
 - **PV01**: move the fixed rate by 1bp, which equals exactly $N \cdot A \cdot 1\text{bp}$, because the fixed leg is linear in $K$.
-- **DV01**: move the whole curve up by 1bp, which gives a slightly larger change. 
+- **DV01**: move the whole curve up by 1bp, which gives a slightly larger change. A curve shift also moves the floating leg, and each discount factor moves by $t \cdot D(t)$, so later cash flows are affected more than the annuity alone would suggest.
 
 ## Assumptions and limitations
 
